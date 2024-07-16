@@ -1,5 +1,12 @@
 - name: Check all connections 
   hosts: all 
+
   tasks:
-    - name: Ping
-      ping:
+    - name: Node Setup yes
+      #ping:
+      setup:
+      register: node_setup
+
+    - name: display node setup
+      debug:
+        msg: "{{ node_setup }}"
