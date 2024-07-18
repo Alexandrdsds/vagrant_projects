@@ -1,7 +1,7 @@
 nodes = [
-  { :hostname => "slave-node-1", :memory => 1024, :cpu => 1, :private_ip => "192.168.1.11", :boxname => "ubuntu/focal64" },
-  { :hostname => "slave-node-2", :memory => 1024, :cpu => 1, :private_ip => "192.168.1.12", :boxname => "ubuntu/focal64" },
-  { :hostname => "primary-node", :memory => 1024, :cpu => 1, :private_ip => "192.168.1.13", :boxname => "ubuntu/focal64" },
+  { :hostname => "graylog01", :memory => 1024, :cpu => 1, :private_ip => "192.168.1.11", :boxname => "ubuntu/focal64" },
+  { :hostname => "graylog02", :memory => 1024, :cpu => 1, :private_ip => "192.168.1.12", :boxname => "ubuntu/focal64" },
+  { :hostname => "graylog03", :memory => 1024, :cpu => 1, :private_ip => "192.168.1.13", :boxname => "ubuntu/focal64" },
   { :hostname => "mgmt-ansible", :memory => 1024, :cpu => 1, :private_ip => "192.168.1.14", :boxname => "ubuntu/focal64" }
  
 ]
@@ -40,6 +40,7 @@ Vagrant.configure("2") do |config|
           ansible.limit = "all" 
           ansible.config_file = "ansible.cfg"
           ansible.inventory_path = "inventory"
+          
         end
         nodeconfig.vm.provision "shell", inline: "cat /vagrant/ansible.cfg > /etc/ansible/ansible.cfg" 
       end

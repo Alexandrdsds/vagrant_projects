@@ -1,12 +1,19 @@
-- name: Check all connections 
-  hosts: all 
+- name: Check graylog connections 
+  hosts: graylog
 
   tasks:
-    - name: Node Setup yes
-      #ping:
-      setup:
-      register: node_setup
 
     - name: display node setup
       debug:
-        msg: "{{ node_setup }}"
+        msg: "{{ test }}"
+
+- name: Check elasticsearch connections 
+  hosts: elasticsearch
+
+  tasks:
+
+    - name: display node setup
+      debug:
+        msg: "{{ test }}"
+
+
