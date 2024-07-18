@@ -32,17 +32,19 @@ Vagrant.configure("2") do |config|
         #nodeconfig.vm.provision "shell", path: "provision.sh"
         nodeconfig.vm.provision "file", source: "C:\\Users\\ohrynkov\\.ssh\\id_rsa", destination: "host_ssh_private_key"
         nodeconfig.vm.provision "shell", inline: <<-SHELL
-          cat host_ssh_private_key > /home/vagrant/.ssh/id_rsa
+          cat host_ssh_private_key > /home/vagrant/.ssh/id_rsa 
         SHELL
+        # nodeconfig.vm.provision "shell", inline: "ansible-galaxy install graylog2.graylog"
         nodeconfig.vm.provision "ansible_local" do |ansible|
           ansible.compatibility_mode = "2.0"
           ansible.playbook = "playbook.yml"
           ansible.limit = "all" 
           ansible.config_file = "ansible.cfg"
           ansible.inventory_path = "inventory"
-          
+          ansible.galaxy_roles_path = "/vagrant/roles"
+          # ansible.galaxy_role_file = "roles_requirements.yml"
         end
-        nodeconfig.vm.provision "shell", inline: "cat /vagrant/ansible.cfg > /etc/ansible/ansible.cfg" 
+        nodeconfig.vm.provision "shell", inline: "cat /vagrant/ansible.cfg > /etc/ansible/ansible.cfg"
       end
     end
   end
