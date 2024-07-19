@@ -1,7 +1,7 @@
 [elasticsearch]
-elasticsearch01 ansible_host=192.168.1.11
-elasticsearch02 ansible_host=192.168.1.12
-elasticsearch03 ansible_host=192.168.1.13
+elasticsearch01 ansible_host=192.168.1.11 node_type=cluster_manager
+elasticsearch02 ansible_host=192.168.1.12 node_type=data_1
+elasticsearch03 ansible_host=192.168.1.13 node_type=data_2
 
 [graylog]
 graylog01 ansible_host=192.168.1.11

@@ -1,22 +1,3 @@
-# - name: Check graylog connections 
-#   hosts: graylog
-
-#   tasks:
-
-#     - name: display node setup
-#       debug:
-#         msg: "{{ test }}"
-
-# - name: Check elasticsearch connections 
-#   hosts: elasticsearch
-
-#   tasks:
-
-#     - name: display node setup
-#       debug:
-
-#         msg: "{{ test }}"
- 
 - name: Provisioning graylog nodes
   hosts: "graylog"
   become: true
@@ -31,6 +12,7 @@
   - name: "Install Java"
     apt:
       update_cache: yes
+      cache_valid_time: 3600
       name: "openjdk-8-jre"
       state: "latest"
 
@@ -57,11 +39,20 @@
   hosts: "graylog01"
   become: true
   tasks:
-    - name: "Install PyMongo"
+
+    - name: "Install pip"
       apt:
         update_cache: yes
-        name: "python3-pymongo"
+        cache_valid_time: 3600
+        name:
+        - "python3-pip"
+        - "mongodb-clients"
         state: "latest"
+
+    - name: "Install PyMongo"
+      pip:
+        name: "pymongo==3.12.0"
+        state: "present"
       
     - name: Configure replicaset
       community.mongodb.mongodb_replicaset:
@@ -70,12 +61,46 @@
         login_password: admin
         replica_set: "rs0"
         members:
-        - host: "graylog01"
+        - host: "192.168.1.11:27017"
           priority: 1
-        - host: "graylog02"
+        - host: "192.168.1.12:27017"
           priority: 0.5
-        - host: "graylog03"
+        - host: "192.168.1.13:27017"
           priority: 0.5
+
+- name: Install OpenSearch | Install necessary Packges
+  hosts: "elasticsearch"
+  become: true
+  tasks:
+
+  - name: OpenSearch Install | Import PGP key
+    apt_key:
+      url: https://artifacts.opensearch.org/publickeys/opensearch.pgp
+      state: present
+
+  - name: OpenSearch Install | Add OpenSearch 2.x repository
+    apt_repository:
+      repo: "deb [arch=amd64] https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/apt stable main"
+      validate_certs: false
+      state: present
+
+  - name: OpenSearch Install | Install packages
+    apt:
+      update_cache: yes
+      name: "opensearch={{ opensearch_version }}"
+      state: present
+    environment:
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "{{ password }}"
+      
+  - name: Configuration for OpenSearch
+    template:
+      src: opensearch.j2
+      dest: /etc/opensearch/opensearch.yml
+    when: 
+    
+
+  
+
 
 
 # - name: Install elasticsearch
@@ -107,7 +132,7 @@
 #   hosts: "graylog"
 #   vars:
 #     graylog_is_master: "{{ True if ansible_hostname == 'graylog01' else False }}"
-#     graylog_version: 4.2
+#     graylog_version: 5.0
 #     graylog_install_java: False
 #     graylog_install_elasticsearch: False
 #     graylog_install_mongodb: False
