@@ -69,7 +69,7 @@
           priority: 0.5
 
 - name: Install OpenSearch | Install necessary Packges
-  hosts: "elasticsearch"
+  hosts: "opensearch"
   become: true
   tasks:
 
@@ -90,13 +90,37 @@
       name: "opensearch={{ opensearch_version }}"
       state: present
     environment:
-      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "{{ password }}"
-      
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "{{ opensearch_password }}"
+
+  - name: Set vm.max_map_count to 262144
+    sysctl:
+      name: vm.max_map_count
+      value: 262144
+      state: present
+      sysctl_set: yes
+  
   - name: Configuration for OpenSearch
     template:
-      src: opensearch.j2
-      dest: /etc/opensearch/opensearch.yml
-    when: 
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+    with_items:
+      - {src: 'opensearch.j2', dest: '/etc/opensearch/opensearch.yml'}
+      - {src: 'jvm.options.j2', dest: '/etc/opensearch/jvm.options'}
+    notify: 
+      - Restart Opensearch
+  
+  - name: Make sure opensearch is started
+    ansible.builtin.service:
+      name: opensearch
+      state: started
+      enabled: true 
+
+  handlers:
+    - name: Restart Opensearch
+      service:
+        name: opensearch
+        state: restarted
+      
     
 
   
