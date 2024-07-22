@@ -1,0 +1,8 @@
+opensearch_password: BR98BO3iztJSxSgfhjdksldlkfehn12345dska2
+opensearch_version: 2.12.0
+opensearch_cluster_name: graylog-cluster
+opensearch_http_port: 9200
+opensearch_path_data: /var/lib/opensearch
+opensearch_path_logs: /var/log/opensearch
+opensearch_xms_value: 1
+opensearch_xmx_value: 1
