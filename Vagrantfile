@@ -41,8 +41,8 @@ Vagrant.configure("2") do |config|
           ansible.compatibility_mode = "2.0"
           ansible.playbook = "playbook.yml"
           ansible.limit = "all" 
-          ansible.config_file = "ansible.cfg"
-          ansible.inventory_path = "inventory"
+          ansible.config_file = "/vagrant/ansible.cfg"
+          ansible.inventory_path = "/vagrant/inventory/inventory.ini"
           ansible.galaxy_roles_path = "/vagrant/roles"
           #ansible.galaxy_role_file = "roles_requirements.yml"
         end

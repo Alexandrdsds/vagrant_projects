@@ -21,4 +21,3 @@ cluster.initial_cluster_manager_nodes: [
     "{{ hostvars[host]['ansible_host'] }}:9300"
     {% if not loop.last %}, {% endif %}
   {% endfor %}]
-#

@@ -6,7 +6,7 @@
 
   - name: Set timezone to Europe/Kyiv
     timezone:
-      name: Europe/Kyiv
+      name: "{{ graylog_timezone }}"
     become: yes
 
   - name: "Install Java"
@@ -29,44 +29,45 @@
     - community.mongodb.mongodb_mongod
 
   tasks:
-    - name: "Start MongoDB"
-      service:
-        name: "mongod"
-        state: "started"
-        enabled: "yes"
+
+  - name: "Start MongoDB"
+    service:
+      name: "mongod"
+      state: "started"
+      enabled: "yes"
 
 - name: Configure MongoDB master node 
   hosts: "graylog01"
   become: true
   tasks:
 
-    - name: "Install pip"
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
-        name:
-        - "python3-pip"
-        - "mongodb-clients"
-        state: "latest"
+  - name: "Install pip"
+    apt:
+      update_cache: yes
+      cache_valid_time: 3600
+      name:
+      - "python3-pip"
+      - "mongodb-clients"
+      state: "latest"
 
-    - name: "Install PyMongo"
-      pip:
-        name: "pymongo==3.12.0"
-        state: "present"
-      
-    - name: Configure replicaset
-      community.mongodb.mongodb_replicaset:
-        login_host: "localhost"
-        login_user: admin
-        login_password: admin
-        replica_set: "rs0"
-        members:
-        - host: "192.168.1.11:27017"
-          priority: 1
-        - host: "192.168.1.12:27017"
-          priority: 0.5
-        - host: "192.168.1.13:27017"
-          priority: 0.5
+  - name: "Install PyMongo"
+    pip:
+      name: "pymongo==3.12.0"
+      state: "present"
+    
+  - name: Configure replicaset
+    community.mongodb.mongodb_replicaset:
+      login_host: "localhost"
+      login_user: admin
+      login_password: admin
+      replica_set: "rs0"
+      members:
+      - host: "192.168.1.11:27017"
+        priority: 1
+      - host: "192.168.1.12:27017"
+        priority: 0.5
+      - host: "192.168.1.13:27017"
+        priority: 0.5
 
 - name: Install OpenSearch | Install necessary Packges
   hosts: "opensearch"
@@ -99,6 +100,10 @@
       state: present
       sysctl_set: yes
   
+  - name: Force systemd to reread configs 
+    systemd:
+      daemon_reload: true
+
   - name: Configuration for OpenSearch
     template:
       src: "{{ item.src }}"
@@ -120,40 +125,29 @@
       service:
         name: opensearch
         state: restarted
-      
-    
 
+- name: Install GrayLog
+  hosts: "graylog"
+  become: true
+  tasks:
+
+  - name: Ensure Graylog repository is downloaded
+    get_url:
+      url: "https://packages.graylog2.org/repo/packages/graylog-{{ graylog_version }}-repository_latest.deb"
+      dest: "{{ ansible_user_dir }}/graylog-{{ graylog_version }}-repository_latest.deb"
+      validate_certs: false
   
-
-
-
-# - name: Install elasticsearch
-#   hosts: "elasticsearch"
-#   vars:
-#     es_major_version: "7.x"
-#     es_version: "7.10.2"
-#     es_enable_xpack: False
-#     es_instance_name: "graylog"
-#     es_heap_size: "1g"
-#     es_config:
-#       node.name: "{{ ansible_hostname }}"
-#       cluster.name: "graylog"
-#       http.port: 9200
-#       transport.port: 9300
-#       network.host: "0.0.0.0"
-#       discovery.seed_hosts: "elasticsearch01:9300, elasticsearch02:9300, elasticsearch03:9300"
-#       cluster.initial_master_nodes: "elasticsearch01, elasticsearch02, elasticsearch03"
-#     oss_version: True
-#     es_action_auto_create_index: False
-
-#   roles:
-#     - role: "elastic.elasticsearch"
-
-
+  - name: Install Graylog repository package
+    apt:
+      deb: "{{ ansible_user_dir }}/graylog-{{ graylog_version }}-repository_latest.deb"
+      state: present
+      update_cache: yes
+      cache_valid_time: 3600
 
 
 # - name: Install GrayLog
 #   hosts: "graylog"
+#   become: true
 #   vars:
 #     graylog_is_master: "{{ True if ansible_hostname == 'graylog01' else False }}"
 #     graylog_version: 5.0
@@ -165,8 +159,8 @@
 #     graylog_http_bind_address: "{{ ansible_default_ipv4.address }}:9000"
 #     graylog_http_publish_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
 #     graylog_http_external_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
-#     graylog_elasticsearch_hosts: "http://elasticsearch01:9200,http://elasticsearch02:9200,http://elasticsearch03:9200"
-#     graylog_mongodb_uri: "mongodb://graylog01:27017,graylog02:27017,graylog03:27017/graylog"
+#     graylog_opensearch_hosts: "http://192.168.1.11:9200,http://192.168.1.12:9200,http://192.168.1.13:9200"
+#     graylog_mongodb_uri: "mongodb://192.168.1.11:27017,192.168.1.12:27017,192.168.1.13:27017/graylog?replicaSet=rs01"
 
 #   roles:
 #     - role: "graylog2.graylog"
