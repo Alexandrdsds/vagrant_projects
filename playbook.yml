@@ -6,7 +6,7 @@
 
   - name: Set timezone to Europe/Kyiv
     timezone:
-      name: Europe/Kyiv
+      name: "{{ graylog_timezone }}"
     become: yes
 
   - name: "Install Java"
@@ -20,21 +20,13 @@
   hosts: "graylog"
   become: true
   vars:
-    mongodb_version: "5.0"
+    mongodb_version: "{{ graylog_database_version }}"
     bind_ip: "0.0.0.0"
-    repl_set_name: "rs0"
+    repl_set_name: "{{ graylog_database_replica_set }}"
     authorization: "disabled"
   roles:
     - community.mongodb.mongodb_repository
     - community.mongodb.mongodb_mongod
-
-  tasks:
-
-  - name: "Start MongoDB"
-    service:
-      name: "mongod"
-      state: "started"
-      enabled: "yes"
 
 - name: Configure MongoDB master node 
   hosts: "graylog01"
@@ -54,20 +46,48 @@
     pip:
       name: "pymongo==3.12.0"
       state: "present"
-    
+
   - name: Configure replicaset
     community.mongodb.mongodb_replicaset:
       login_host: "localhost"
-      login_user: admin
-      login_password: admin
-      replica_set: "rs0"
+      login_user: "{{ graylog_database_admin_user }}"
+      login_password: "{{ graylog_database_admin_password }}"
+      replica_set: "{{ graylog_database_replica_set }}"
       members:
-      - host: "192.168.1.11:27017"
+      - host: "192.168.1.11:{{ graylog_database_port }}"
         priority: 1
-      - host: "192.168.1.12:27017"
+      - host: "192.168.1.12:{{ graylog_database_port }}"
         priority: 0.5
-      - host: "192.168.1.13:27017"
+      - host: "192.168.1.13:{{ graylog_database_port }}"
         priority: 0.5
+
+  - name: Create MongoDB admin user
+    community.mongodb.mongodb_user:
+      name: "{{ graylog_database_admin_user }}"
+      password: "{{ graylog_database_admin_password }}"
+      roles:
+        - { db: "admin", role: "userAdminAnyDatabase" }
+        - { db: "admin", role: "dbAdminAnyDatabase" }
+        - { db: "admin", role: "readWriteAnyDatabase" }
+      state: present
+      login_host: localhost
+      login_port: "{{ graylog_database_port }}"
+      replica_set: "{{ graylog_database_replica_set }}"
+      database: admin
+
+  - name: Create Graylog Database and Administrator of this database
+    community.mongodb.mongodb_user:
+      login_user: "{{ graylog_database_admin_user }}"
+      login_password: "{{ graylog_database_admin_password }}"
+      name: "{{ graylog_database_user }}"
+      password: "{{ graylog_database_password }}"
+      roles:
+        - { db: "{{ graylog_database }}", role: "readWrite" }
+        - { db: "{{ graylog_database }}", role: "dbAdmin" }
+      state: present
+      login_host: localhost
+      login_port: "{{ graylog_database_port }}"
+      database: "{{ graylog_database }}"
 
 - name: Install OpenSearch | Install necessary Packges
   hosts: "opensearch"
@@ -126,24 +146,52 @@
         name: opensearch
         state: restarted
 
-- name: Install GrayLog
-  hosts: "graylog"
+- name: Install Graylog repository
+  hosts: graylog
   become: true
-  vars:
-    graylog_is_master: "{{ True if ansible_hostname == 'graylog01' else False }}"
-    graylog_version: 5.0
-    graylog_install_java: False
-    graylog_install_elasticsearch: False
-    graylog_install_mongodb: False
-    graylog_password_secret: "Devops228!" # Insert your own here. Generate with: pwgen -s 96 1
-    graylog_root_password_sha2: "Devops228!" # Insert your own root_password_sha2 here.
-    graylog_http_bind_address: "{{ ansible_default_ipv4.address }}:9000"
-    graylog_http_publish_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
-    graylog_http_external_uri: "http://{{ ansible_default_ipv4.address }}:9000/"
-    graylog_opensearch_hosts: "http://192.168.1.11:9200,http://192.168.1.12:9200,http://192.168.1.13:9200"
-    graylog_mongodb_uri: "mongodb://192.168.1.11:27017,192.168.1.12:27017,192.168.1.13:27017/graylog?replicaSet=rs01"
+  tasks:
 
-  roles:
-    - role: "graylog2.graylog"
+  - name: Download Graylog repository package
+    get_url:
+      url: "https://packages.graylog2.org/repo/packages/graylog-{{ graylog_version }}-repository_latest.deb"
+      dest: "/tmp/graylog-{{ graylog_version }}-repository_latest.deb"
+
+  - name: Install Graylog repository package
+    apt:
+      deb: "/tmp/graylog-{{ graylog_version }}-repository_latest.deb"
+      state: present
+      update_cache: yes
+  
+  - name: Install Graylog server
+    apt:
+      update_cache: yes
+      name: graylog-server
+      state: present
+  
+  - name: Set Graylog Config file
+    template:
+      src: "graylog_server.j2"
+      dest: "/etc/graylog/server/server.conf"
+    notify: Restart Graylog
+  
+  - name: Force systemd to reread configs 
+    systemd:
+      daemon_reload: true
+  
+  - name: Make sure Graylog is started
+    service:
+      name: graylog-server
+      state: started
+      enabled: true 
+  
+  handlers:
+    - name: Restart Graylog
+      service:
+        name: graylog-server
+        state: restarted
+  
+
+
+    
 
 

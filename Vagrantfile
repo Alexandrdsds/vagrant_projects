@@ -23,8 +23,6 @@ Vagrant.configure("2") do |config|
       nodeconfig.vm.hostname = node[:hostname]
       nodeconfig.disksize.size = node[:disksize]
       nodeconfig.vm.network :private_network, ip: node[:private_ip]
-      # if node[:hostname] =! "mgmt-ansible"
-      #   nodeconfig.vm.network "public_network", bridge: "Intel(R) Dual Band Wireless-AC 8265"
       nodeconfig.vm.provider :virtualbox do |vb|
         vb.memory = node[:memory]
         vb.cpus = node[:cpu]
