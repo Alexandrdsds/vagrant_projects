@@ -27,6 +27,18 @@
   roles:
     - community.mongodb.mongodb_repository
     - community.mongodb.mongodb_mongod
+  tasks: 
+
+  - name: Ensure that config file mongod.service is exists
+    template:
+      src: mongod.service.j2
+      dest: /lib/systemd/system/mongod.service
+    notify: daemon reload
+  
+  handlers:
+    - name: daemon reload
+      systemd:
+        daemon_reload: true
 
 - name: Configure MongoDB master node 
   hosts: "graylog01"
@@ -39,12 +51,12 @@
       cache_valid_time: 3600
       name:
       - "python3-pip"
-      - "mongodb-clients"
+
       state: "latest"
 
   - name: "Install PyMongo"
     pip:
-      name: "pymongo==3.12.0"
+      name: "pymongo==4.2.0"
       state: "present"
 
   - name: Configure replicaset
@@ -54,11 +66,11 @@
       login_password: "{{ graylog_database_admin_password }}"
       replica_set: "{{ graylog_database_replica_set }}"
       members:
-      - host: "192.168.1.11:{{ graylog_database_port }}"
+      - host: "{{ hostvars[groups['graylog'][0]]['ansible_host'] }}:{{ graylog_database_port }}"
         priority: 1
-      - host: "192.168.1.12:{{ graylog_database_port }}"
+      - host: "{{ hostvars[groups['graylog'][1]]['ansible_host'] }}:{{ graylog_database_port }}"
         priority: 0.5
-      - host: "192.168.1.13:{{ graylog_database_port }}"
+      - host: "{{ hostvars[groups['graylog'][2]]['ansible_host'] }}:{{ graylog_database_port }}"
         priority: 0.5
 
   - name: Create MongoDB admin user
@@ -88,7 +100,17 @@
       login_host: localhost
       login_port: "{{ graylog_database_port }}"
       database: "{{ graylog_database }}"
+  
+  - name: Restart MongoDB on master node
+    service:
+      name: mongod
+      state: restarted
+    tags: restart-mongo
 
+  - name: Restart systemd
+    systemd:
+      daemon_reload: true
+    
 - name: Install OpenSearch | Install necessary Packges
   hosts: "opensearch"
   become: true

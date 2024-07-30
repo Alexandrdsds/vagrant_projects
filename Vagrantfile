@@ -1,8 +1,8 @@
 nodes = [
-  { :hostname => "graylog01", :memory => 4096, :cpu => 2, :private_ip => "192.168.1.11", :disksize => "50GB", :boxname => "ubuntu/focal64" },
+  { :hostname => "graylog01", :memory => 4096, :cpu => 2, :private_ip => "192.168.1.15", :disksize => "50GB", :boxname => "ubuntu/focal64" },
   { :hostname => "graylog02", :memory => 4096, :cpu => 2, :private_ip => "192.168.1.12", :disksize => "50GB",:boxname => "ubuntu/focal64" },
   { :hostname => "graylog03", :memory => 4096, :cpu => 2, :private_ip => "192.168.1.13", :disksize => "50GB", :boxname => "ubuntu/focal64" },
-  { :hostname => "mgmt-ansible", :memory => 1024, :cpu => 1, :private_ip => "192.168.1.14", :disksize => "50GB", :boxname => "ubuntu/focal64" }
+  #{ :hostname => "mgmt-ansible", :memory => 1024, :cpu => 1, :private_ip => "192.168.1.14", :disksize => "50GB", :boxname => "ubuntu/focal64" }
  
 ]
 

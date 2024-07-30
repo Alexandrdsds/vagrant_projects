@@ -5,6 +5,9 @@ graylog_root_username: admin
 graylog_password_secret: 4M3jfAJcq6eLjPuQIDwL0u420q13EAfgHKb4U4P21L2-yjoIvIsHrZPk0ywHRtKtgDHl6wntpVepxH5la4d3n8cwZxrLXqY0
 graylog_root_password_sha2: e5c477a64858b31be3923774a5ec3a05e7fd4087984a6aa986293c73c2d1d872
 graylog_database_version: 6.0
+graylog_mongodb_key: "https://www.mongodb.org/static/pgp/server-{{ graylog_database_version }}.asc"
+graylog_mongodb_repo: "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu {{ ansible_distribution_release }}/mongodb-org/{{ graylog_database_version }} multiverse"
+graylog_mongodb_package_name: mongodb-org
 graylog_database: graylog
 graylog_database_user: graylog
 graylog_database_replica_set: rs01
