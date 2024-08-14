@@ -32,8 +32,8 @@ Vagrant.configure("2") do |config|
       # Provision Ansible only on mgmt-ansible node
       if node[:hostname] == "mgmt-ansible"
         #nodeconfig.vm.provision "shell", path: "provision.sh"
+        nodeconfig.vm.network :private_network, ip: node[:private_ip]
         config.vm.synced_folder '.', '/vagrant', disabled: false
-        #nodeconfig.vm.provision "shell", inline: "export ANSIBLE_CONFIG=/vagrant/ansible.cfg"
         nodeconfig.vm.provision "file", source: "C:\\Users\\ohrynkov\\.ssh\\id_rsa", destination: "host_ssh_private_key"
         nodeconfig.vm.provision "shell", inline: <<-SHELL
           echo "export ANSIBLE_CONFIG='/vagrant/ansible.cfg'" >> /etc/profile.d/myvar.sh
@@ -46,9 +46,7 @@ Vagrant.configure("2") do |config|
           ansible.config_file = "/vagrant/ansible.cfg"
           ansible.inventory_path = "/vagrant/inventory/inventory.ini"
           ansible.galaxy_roles_path = "/vagrant/roles"
-          #ansible.galaxy_role_file = "roles_requirements.yml"
         end
-        #nodeconfig.vm.provision "shell", inline: "cat /vagrant/ansible.cfg > /etc/ansible/ansible.cfg"
       end
     end
   end

@@ -1,23 +1,14 @@
-cluster.name: "{{ opensearch_cluster_name }}"
-node.name: "{{ ansible_hostname }}-{{ hostvars[inventory_hostname]['node_type'] }}"
-node.roles: "[{{hostvars[inventory_hostname]['node_role']}}]"
-network.bind_host: "{{ ansible_host }}" 
-http.port: "{{ opensearch_http_port }}"
-path.data: "{{ opensearch_path_data }}"
-path.logs: "{{ opensearch_path_logs }}"
+cluster.name: {{ opensearch_cluster_name }}
+node.name: {{ hostvars[inventory_hostname]['node_name'] }}
+node.roles: [{{hostvars[inventory_hostname]['node_role']}}]
+network.bind_host: {{ ansible_host }} 
+network.publish_host: {{ ansible_host }} 
+http.port: {{ opensearch_http_port }}
+path.data: {{ opensearch_path_data }}
+path.logs: {{ opensearch_path_logs }}
 network.host: 0.0.0.0
 action.auto_create_index: false
 plugins.security.disabled: true
 indices.query.bool.max_clause_count: 32768
-discovery.seed_hosts: [ 
-  {% for host in groups['opensearch'] %}
-    {% if hostvars[host]['ansible_host'] != ansible_host %}
-      "{{ hostvars[host]['ansible_host'] }}"
-      {% if not loop.last %}, {% endif %}
-    {% endif %}
-  {% endfor %}]
-cluster.initial_cluster_manager_nodes: [
-  {% for host in groups['opensearch'] if hostvars[host]['node_type'] == 'cluster_manager' %}
-    "{{ hostvars[host]['ansible_host'] }}:9300"
-    {% if not loop.last %}, {% endif %}
-  {% endfor %}]
+discovery.seed_hosts: [ {% for host in groups['opensearch'] %}{% if hostvars[host]['ansible_host'] != ansible_host %}"{{ hostvars[host]['ansible_host'] }}"{% if not loop.last %}, {% endif %}{% endif %}{% endfor %} ]
+cluster.initial_cluster_manager_nodes: [{% for host in groups['opensearch'] if hostvars[host]['node_name'] == 'node-1' %}"{{ hostvars[host]['ansible_host'] }}:9300"{% if not loop.last %}, {% endif %}{% endfor %}]

@@ -1,2 +1,17 @@
 graylog_timezone: Europe/Kyiv
-graylog_version: 
+graylog_version: 5.2
+graylog_mongodb_version: 6.0
+graylog_mongodb_ubuntu_repo: "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu {{ ansible_distribution_release }}/mongodb-org/{{ graylog_mongodb_version }} multiverse"
+graylog_mongodb_ubuntu_key: "https://www.mongodb.org/static/pgp/server-{{ graylog_mongodb_version }}.asc"
+graylog_database_port: 27017
+graylog_port: 9000
+graylog_root_username: admin
+graylog_password_secret: ncc4jque0VvGImadZ7jzX26NrEfjkesdY4U4nNfZWAklosvUGDKnMjbC4eEAU0KcfWX6C6rimE80CrYPP9ErpvyFPXc2H2xKf
+graylog_root_password_sha2: e5c477a64858b31be3923774a5ec3a05e7fd4087984a6aa986293c73c2d1d872
+graylog_database: graylog
+graylog_database_user: graylog
+graylog_database_password: Pa$$w0rd
+graylog_database_admin_user: admin
+graylog_database_admin_password: admin
+graylog_database_replica_set: rs01
+

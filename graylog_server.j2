@@ -38,6 +38,3 @@ stale_leader_timeout = 10000
 mongodb_uri = mongodb://{{ graylog_database_user }}:{{ graylog_database_password }}@{% for host in groups['opensearch'] %}{{ hostvars[host]['ansible_host'] }}:{{ graylog_database_port }}{% if not loop.last %},{% endif %}{% endfor %}/{{ graylog_database }}?replicaSet={{ graylog_database_replica_set }}
 mongodb_max_connections = 1000
 root_timezone = {{ graylog_timezone }}
-
-
-
