@@ -19,100 +19,102 @@
 - name: Install MongoDB
   hosts: "graylog"
   become: true
-  vars:
-    mongodb_version: "{{ graylog_mongodb_version }}"
-    bind_ip: "0.0.0.0"
-    repl_set_name: "{{ graylog_database_replica_set }}"
-    authorization: "disabled"
   roles:
-    - community.mongodb.mongodb_repository
-    - community.mongodb.mongodb_mongod
-  tasks: 
+    - install_mongodb
+#   vars:
+#     mongodb_version: "{{ graylog_mongodb_version }}"
+#     bind_ip: "0.0.0.0"
+#     repl_set_name: "{{ graylog_database_replica_set }}"
+#     authorization: "disabled"
+#   roles:
+#     - community.mongodb.mongodb_repository
+#     - community.mongodb.mongodb_mongod
+#   tasks: 
 
-  - name: Ensure that config file mongod.service is exists
-    template:
-      src: mongod.service.j2
-      dest: /lib/systemd/system/mongod.service
-    notify: daemon reload
+#   - name: Ensure that config file mongod.service is exists
+#     template:
+#       src: mongod.service.j2
+#       dest: /lib/systemd/system/mongod.service
+#     notify: daemon reload
   
-  handlers:
-    - name: daemon reload
-      systemd:
-        daemon_reload: true
+#   handlers:
+#     - name: daemon reload
+#       systemd:
+#         daemon_reload: true
 
-- name: Configure MongoDB master node 
-  hosts: "graylog01"
-  become: true
-  tasks:
+# - name: Configure MongoDB master node 
+#   hosts: "graylog01"
+#   become: true
+#   tasks:
 
-  - name: "Install pip"
-    apt:
-      update_cache: yes
-      cache_valid_time: 3600
-      name:
-      - "python3-pip"
+#   - name: "Install pip"
+#     apt:
+#       update_cache: yes
+#       cache_valid_time: 3600
+#       name:
+#       - "python3-pip"
 
-      state: "latest"
+#       state: "latest"
 
-  - name: "Install PyMongo"
-    pip:
-      name: "pymongo==4.2.0"
-      state: "present"
+#   - name: "Install PyMongo"
+#     pip:
+#       name: "pymongo==4.2.0"
+#       state: "present"
 
-  - name: Configure replicaset
-    community.mongodb.mongodb_replicaset:
-      login_host: "localhost"
-      login_user: "{{ graylog_database_admin_user }}"
-      login_password: "{{ graylog_database_admin_password }}"
-      replica_set: "{{ graylog_database_replica_set }}"
-      members:
-      - host: "{{ hostvars[groups['graylog'][0]]['ansible_host'] }}:{{ graylog_database_port }}"
-        priority: 1
-      - host: "{{ hostvars[groups['graylog'][1]]['ansible_host'] }}:{{ graylog_database_port }}"
-        priority: 0.5
-      - host: "{{ hostvars[groups['graylog'][2]]['ansible_host'] }}:{{ graylog_database_port }}"
-        priority: 0.5
-    register: mongo_replicaset
+#   - name: Configure replicaset
+#     community.mongodb.mongodb_replicaset:
+#       login_host: "localhost"
+#       login_user: "{{ graylog_database_admin_user }}"
+#       login_password: "{{ graylog_database_admin_password }}"
+#       replica_set: "{{ graylog_database_replica_set }}"
+#       members:
+#       - host: "{{ hostvars[groups['graylog'][0]]['ansible_host'] }}:{{ graylog_database_port }}"
+#         priority: 1
+#       - host: "{{ hostvars[groups['graylog'][1]]['ansible_host'] }}:{{ graylog_database_port }}"
+#         priority: 0.5
+#       - host: "{{ hostvars[groups['graylog'][2]]['ansible_host'] }}:{{ graylog_database_port }}"
+#         priority: 0.5
+#     register: mongo_replicaset
   
-  - block: #=================CONFIGURE MONGODB REPLICASET ================== 
-      - name: Create MongoDB admin user
-        community.mongodb.mongodb_user:
-          login_host: localhost
-          login_port: "{{ graylog_database_port }}"
-          name: "{{ graylog_database_admin_user }}"
-          password: "{{ graylog_database_admin_password }}"
-          roles:
-            - { db: "admin", role: "userAdminAnyDatabase" }
-            - { db: "admin", role: "dbAdminAnyDatabase" }
-            - { db: "admin", role: "readWriteAnyDatabase" }
-          state: present
-          replica_set: "{{ graylog_database_replica_set }}"
-          database: admin
+#   - block: #=================CONFIGURE MONGODB REPLICASET ================== 
+#       - name: Create MongoDB admin user
+#         community.mongodb.mongodb_user:
+#           login_host: localhost
+#           login_port: "{{ graylog_database_port }}"
+#           name: "{{ graylog_database_admin_user }}"
+#           password: "{{ graylog_database_admin_password }}"
+#           roles:
+#             - { db: "admin", role: "userAdminAnyDatabase" }
+#             - { db: "admin", role: "dbAdminAnyDatabase" }
+#             - { db: "admin", role: "readWriteAnyDatabase" }
+#           state: present
+#           replica_set: "{{ graylog_database_replica_set }}"
+#           database: admin
 
-      - name: Create Graylog Database and Administrator of this database
-        community.mongodb.mongodb_user:
-          login_user: "{{ graylog_database_admin_user }}"
-          login_password: "{{ graylog_database_admin_password }}"
-          name: "{{ graylog_database_user }}"
-          password: "{{ graylog_database_password }}"
-          roles:
-            - { db: "{{ graylog_database }}", role: "readWrite" }
-            - { db: "{{ graylog_database }}", role: "dbAdmin" }
-          state: present
-          login_host: localhost
-          login_port: "{{ graylog_database_port }}"
-          database: "{{ graylog_database }}"
+#       - name: Create Graylog Database and Administrator of this database
+#         community.mongodb.mongodb_user:
+#           login_user: "{{ graylog_database_admin_user }}"
+#           login_password: "{{ graylog_database_admin_password }}"
+#           name: "{{ graylog_database_user }}"
+#           password: "{{ graylog_database_password }}"
+#           roles:
+#             - { db: "{{ graylog_database }}", role: "readWrite" }
+#             - { db: "{{ graylog_database }}", role: "dbAdmin" }
+#           state: present
+#           login_host: localhost
+#           login_port: "{{ graylog_database_port }}"
+#           database: "{{ graylog_database }}"
       
-      - name: Restart MongoDB on master node
-        service:
-          name: mongod
-          state: restarted
-        tags: restart-mongo
+#       - name: Restart MongoDB on master node
+#         service:
+#           name: mongod
+#           state: restarted
+#         tags: restart-mongo
 
-      - name: Restart systemd
-        systemd:
-          daemon_reload: true
-    when: mongo_replicaset.changed
+#       - name: Restart systemd
+#         systemd:
+#           daemon_reload: true
+#     when: mongo_replicaset.changed
     
 - name: Install OpenSearch | Install necessary Packges
   hosts: "opensearch"
@@ -210,6 +212,15 @@
       name: graylog-server
       state: started
       enabled: true 
+
+  - name: Ensure opensearch  is in a running state
+    service:
+      name: opensearch
+      state: started
+    register: opensearchDetails
+    until: opensearchDetails.status.ActiveState == "active"
+    retries: 15
+    delay: 20
   
   handlers:
     - name: Restart Graylog

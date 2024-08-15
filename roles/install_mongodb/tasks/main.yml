@@ -1,0 +1,8 @@
+---
+# tasks file for mongodb
+- name: Install MongoDB
+  include_tasks: install_mongodb.yml
+
+- name: Configure Replicaset
+  include_tasks: config_replicaset.yml
+  when: inventory_hostname == "graylog01"

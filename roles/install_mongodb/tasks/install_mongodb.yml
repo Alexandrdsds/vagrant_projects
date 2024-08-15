@@ -1,0 +1,14 @@
+---
+- name: Download MongoDB repository
+  include_role:
+    name: community.mongodb.mongodb_repository
+
+- name: Install MongoDB service
+  include_role:
+    name: community.mongodb.mongodb_mongod
+
+- name: Ensure that config file mongod.service is exists
+  template:
+    src: mongod.service.j2
+    dest: /lib/systemd/system/mongod.service
+  notify: Restart systemd

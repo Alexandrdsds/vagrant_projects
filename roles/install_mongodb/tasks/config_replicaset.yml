@@ -1,0 +1,60 @@
+- name: "Install pip"
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+    name:
+    - "python3-pip"
+
+    state: "latest"
+
+- name: "Install PyMongo"
+  pip:
+    name: "pymongo=={{ pymongo_version }}"
+    state: "present"
+
+- name: Configure replicaset
+  community.mongodb.mongodb_replicaset:
+    login_host: "localhost"
+    login_user: "{{ graylog_database_admin_user }}"
+    login_password: "{{ graylog_database_admin_password }}"
+    replica_set: "{{ graylog_database_replica_set }}"
+    members:
+    - host: "{{ hostvars[groups['graylog'][0]]['ansible_host'] }}:{{ graylog_database_port }}"
+      priority: 1
+    - host: "{{ hostvars[groups['graylog'][1]]['ansible_host'] }}:{{ graylog_database_port }}"
+      priority: 0.5
+    - host: "{{ hostvars[groups['graylog'][2]]['ansible_host'] }}:{{ graylog_database_port }}"
+      priority: 0.5
+  register: mongo_replicaset
+
+- block: #=================CONFIGURE MONGODB REPLICASET ================== 
+    - name: Create MongoDB admin user
+      community.mongodb.mongodb_user:
+        login_host: localhost
+        login_port: "{{ graylog_database_port }}"
+        name: "{{ graylog_database_admin_user }}"
+        password: "{{ graylog_database_admin_password }}"
+        roles:
+          - { db: "admin", role: "userAdminAnyDatabase" }
+          - { db: "admin", role: "dbAdminAnyDatabase" }
+          - { db: "admin", role: "readWriteAnyDatabase" }
+        state: present
+        replica_set: "{{ graylog_database_replica_set }}"
+        database: admin
+
+    - name: Create Graylog Database and Administrator of this database
+      community.mongodb.mongodb_user:
+        login_user: "{{ graylog_database_admin_user }}"
+        login_password: "{{ graylog_database_admin_password }}"
+        name: "{{ graylog_database_user }}"
+        password: "{{ graylog_database_password }}"
+        roles:
+          - { db: "{{ graylog_database }}", role: "readWrite" }
+          - { db: "{{ graylog_database }}", role: "dbAdmin" }
+        state: present
+        login_host: localhost
+        login_port: "{{ graylog_database_port }}"
+        database: "{{ graylog_database }}"
+      notify:
+        - Restart MongoDB
+  when: mongo_replicaset.changed

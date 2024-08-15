@@ -14,4 +14,10 @@ graylog_database_password: Pa$$w0rd
 graylog_database_admin_user: admin
 graylog_database_admin_password: admin
 graylog_database_replica_set: rs01
+pymongo_version: 4.2.0
+
+bind_ip: "0.0.0.0"
+repl_set_name: "{{ graylog_database_replica_set }}"
+authorization: "disabled"
+mongodb_version: "{{ graylog_mongodb_version }}"
 

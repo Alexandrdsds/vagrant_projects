@@ -1,0 +1,10 @@
+---
+# handlers file for mongodb
+- name: Restart systemd
+  systemd:
+    daemon_reload: true
+
+- name: Restart MongoDB
+  service:
+    name: mongod
+    state: restarted
